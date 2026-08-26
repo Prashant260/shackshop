@@ -77,9 +77,8 @@ jobs:
             sudo docker run -d \
               --name shackshop \
               --restart unless-stopped \
-              -p 80:8000 \
+              -p 80:5000 \
               ${{ secrets.DOCKER_USERNAME }}/shackshop:latest
-
             echo "Checking container..."
 
             sudo docker ps
@@ -89,7 +88,7 @@ jobs:
             sleep 5
 
             curl -f http://localhost/ || \
-              curl -f http://localhost:8000/ || true
+              curl -f http://localhost:5000/ || true
 
             echo "Cleaning unused images..."
 
