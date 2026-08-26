@@ -9,17 +9,17 @@ jobs:
 
   build:
     name: Build
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/reusable-build.yml
 
   test:
     name: Test
     needs: build
-    uses: ./.github/workflows/test.yml
+    uses: ./.github/workflows/reusable-test.yml
 
   sonarcloud:
     name: SonarCloud
-    needs: build
-    uses: ./.github/workflows/sonarcloud.yml
+    needs: test
+    uses: ./.github/workflows/reusable-sonarcloud.yml
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
