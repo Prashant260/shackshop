@@ -35,4 +35,9 @@ jobs:
     needs: [build, test, snyk, sonarcloud]
     uses: ./.github/workflows/reusable-docker.yml
     secrets: inherit
-    
+
+  deploy:
+   name: Deploy to EC2
+   needs: [docker]
+   uses: ./.github/workflows/reusable-deploy.yml
+   secrets: inherit  
