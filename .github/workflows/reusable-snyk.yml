@@ -1,4 +1,4 @@
-name: Reusable Snyk Scan
+name: Snyk Dependency Scan
 
 on:
   workflow_call:
@@ -8,7 +8,6 @@ on:
 
 jobs:
   snyk:
-    name: Snyk Dependency Scan
     runs-on: ubuntu-latest
 
     steps:
@@ -23,8 +22,23 @@ jobs:
       - name: Install Snyk
         run: npm install -g snyk
 
+      - name: Debug Python dependencies
+        run: |
+          python --version
+          pip --version
+          echo "===== requirements.txt ====="
+          cat requirements.txt
+          echo "===== Installing dependencies ====="
+          pip install -r requirements.txt
+          echo "===== Installed packages ====="
+          pip list
+
       - name: Run Snyk
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: |
-          snyk test --file=requirements.txt --package-manager=pip --severity-threshold=high
+          snyk auth "$SNYK_TOKEN"
+          snyk test \
+            --file=requirements.txt \
+            --package-manager=pip \
+            --severity-threshold=high
