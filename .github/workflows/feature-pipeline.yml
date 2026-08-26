@@ -24,10 +24,12 @@ jobs:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   snyk:
+    name: Snyk
     needs: build
-    uses: ./.github/workflows/snyk.yml
-    secrets: inherit
-
+    uses: ./.github/workflows/reusable-snyk.yml
+    secrets:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  
   trivy:
     needs: build
     uses: ./.github/workflows/trivy.yml
