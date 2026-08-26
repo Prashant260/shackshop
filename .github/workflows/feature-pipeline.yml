@@ -17,9 +17,11 @@ jobs:
     uses: ./.github/workflows/reusable/test.yml
 
   sonarcloud:
+    name: SonarCloud
     needs: build
     uses: ./.github/workflows/reusable/sonarcloud.yml
-    secrets: inherit
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   snyk:
     needs: build
