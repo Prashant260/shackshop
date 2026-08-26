@@ -1,0 +1,17 @@
+name: Feature Pipeline
+
+on:
+  push:
+    branches:
+      - "feature/**"
+
+jobs:
+
+  build:
+    name: Build
+    uses: ./.github/workflows/reusable/build.yml
+
+  test:
+    name: Test
+    needs: build
+    uses: ./.github/workflows/reusable/test.yml
