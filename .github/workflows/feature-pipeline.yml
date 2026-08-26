@@ -62,53 +62,164 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Create site directories
+        run: |
+          mkdir -p site/test-reports
+
       - name: Download Test Reports
         uses: actions/download-artifact@v6
         with:
           name: test-reports
           path: site/test-reports
 
+      - name: Verify downloaded reports
+        run: |
+          echo "===== Site Contents ====="
+          find site -type f -print
+
+          echo "===== Test Reports ====="
+          ls -lah site/test-reports
+
+          echo "===== Coverage ====="
+          ls -lah site/test-reports/coverage || true
+
       - name: Create Dashboard
         run: |
-          mkdir -p site
-
           cat > site/index.html <<'EOF'
           <!DOCTYPE html>
-          <html>
+          <html lang="en">
           <head>
             <meta charset="UTF-8">
-            <title>Shackshop CI/CD Report</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Shackshop CI/CD Dashboard</title>
+
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                background: #f5f7fa;
+                margin: 0;
+                color: #24292f;
+              }
+
+              header {
+                background: #24292f;
+                color: white;
+                padding: 35px;
+              }
+
+              header h1 {
+                margin: 0 0 10px;
+              }
+
+              main {
+                max-width: 1000px;
+                margin: 30px auto;
+                padding: 0 20px;
+              }
+
+              .card {
+                background: white;
+                padding: 25px;
+                margin-bottom: 20px;
+                border-radius: 10px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+              }
+
+              .card h2 {
+                margin-top: 0;
+              }
+
+              a {
+                display: inline-block;
+                margin: 8px 0;
+                font-weight: bold;
+                text-decoration: none;
+              }
+
+              a:hover {
+                text-decoration: underline;
+              }
+
+              .success {
+                color: #1a7f37;
+              }
+            </style>
           </head>
 
           <body>
 
-            <h1>Shackshop CI/CD Dashboard</h1>
+            <header>
+              <h1>Shackshop CI/CD Dashboard</h1>
+              <p>Build → Test → Security → Docker → EC2 → Reports</p>
+            </header>
 
-            <h2>Automated Tests</h2>
+            <main>
 
-            <ul>
-              <li>
-                <a href="test-reports/pytest-report.html">
-                  Pytest Report
-                </a>
-              </li>
+              <div class="card">
+                <h2>Automated Test Reports</h2>
 
-              <li>
-                <a href="test-reports/coverage/index.html">
-                  Code Coverage
-                </a>
-              </li>
+                <p>
+                  <a href="./test-reports/pytest-report.html">
+                    📊 Pytest Report
+                  </a>
+                </p>
 
-              <li>
-                <a href="test-reports/test.log">
-                  Test Execution Log
-                </a>
-              </li>
-            </ul>
+                <p>
+                  <a href="./test-reports/coverage/index.html">
+                    📈 Code Coverage
+                  </a>
+                </p>
+
+                <p>
+                  <a href="./test-reports/test.log">
+                    📄 Test Execution Log
+                  </a>
+                </p>
+              </div>
+
+              <div class="card">
+                <h2>Pipeline Stages</h2>
+
+                <p class="success">✓ Build</p>
+                <p class="success">✓ Test</p>
+                <p class="success">✓ Snyk Security Scan</p>
+                <p class="success">✓ SonarCloud Analysis</p>
+                <p class="success">✓ Docker Build & Push</p>
+                <p class="success">✓ EC2 Deployment</p>
+              </div>
+
+              <div class="card">
+                <h2>Application</h2>
+
+                <p>
+                  <a href="http://3.107.49.1" target="_blank">
+                    🚀 Open Shackshop Application
+                  </a>
+                </p>
+              </div>
+
+            </main>
 
           </body>
           </html>
           EOF
+
+      - name: Verify Pages Site
+        run: |
+          echo "===== Final Pages Structure ====="
+          find site -type f -print
+
+          echo "===== Dashboard ====="
+          test -f site/index.html
+
+          echo "===== Pytest Report ====="
+          test -f site/test-reports/pytest-report.html
+
+          echo "===== Test Log ====="
+          test -f site/test-reports/test.log
+
+          echo "===== Coverage Report ====="
+          test -f site/test-reports/coverage/index.html
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
