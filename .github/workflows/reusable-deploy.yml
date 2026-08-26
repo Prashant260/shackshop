@@ -4,35 +4,82 @@ on:
   workflow_call:
 
 jobs:
-  deploy:
-    name: Deploy to EC2
-    runs-on: ubuntu-latest
+ deploy:
+  name: Deploy to EC2
+  needs: [build, test, snyk, sonarcloud, docker]
+  runs-on: ubuntu-latest
 
-    steps:
-      - name: Deploy application to EC2
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            echo "Starting deployment..."
+  steps:
+    - name: Deploy application to EC2
+      uses: appleboy/ssh-action@v1.2.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        timeout: 30s
+        command_timeout: 10m
 
-            docker login \
-              -u "${{ secrets.DOCKERHUB_USERNAME }}" \
-              -p "${{ secrets.DOCKERHUB_TOKEN }}"
+        script: |
+          set -e
 
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/shackshop:latest
+          echo "======================================"
+          echo "Checking Docker"
+          echo "======================================"
 
-            docker stop shackshop || true
-            docker rm shackshop || true
+          if ! command -v docker >/dev/null 2>&1; then
+            echo "Docker not found. Installing..."
 
-            docker run -d \
-              --name shackshop \
-              --restart unless-stopped \
-              -p 80:8000 \
-              ${{ secrets.DOCKERHUB_USERNAME }}/shackshop:latest
+            sudo apt-get update
+            sudo apt-get install -y docker.io
 
-            docker image prune -f
+            sudo systemctl enable --now docker
 
-            echo "Deployment completed."
+            echo "Docker installation completed."
+          fi
+
+          echo "Docker version:"
+          sudo docker --version
+
+          echo "Docker status:"
+          sudo systemctl is-active docker
+
+          echo "Logging into Docker Hub..."
+
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | sudo docker login \
+            -u "${{ secrets.DOCKERHUB_USERNAME }}" \
+            --password-stdin
+
+          echo "Pulling application image..."
+
+          sudo docker pull \
+            ${{ secrets.DOCKERHUB_USERNAME }}/shackshop:latest
+
+          echo "Stopping old container..."
+
+          sudo docker stop shackshop || true
+          sudo docker rm shackshop || true
+
+          echo "Starting application..."
+
+          sudo docker run -d \
+            --name shackshop \
+            --restart unless-stopped \
+            -p 80:5000 \
+            ${{ secrets.DOCKERHUB_USERNAME }}/shackshop:latest
+
+          echo "Checking container..."
+
+          sudo docker ps
+
+          echo "Checking application..."
+
+          sleep 5
+
+          curl -f http://localhost/ || {
+            echo "Application failed to respond."
+            sudo docker logs shackshop
+            exit 1
+          }
+
+          echo "Deployment completed successfully."
