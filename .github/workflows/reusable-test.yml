@@ -23,6 +23,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-html pytest-cov
 
+      - name: Set Python path
+        run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV    
+
       - name: Run Tests
         shell: bash
         run: |
