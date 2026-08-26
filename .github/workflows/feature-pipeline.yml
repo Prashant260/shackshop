@@ -228,3 +228,22 @@ jobs:
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
+
+      - name: Add GitHub Pages links to summary
+        run: |
+          PAGES_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+
+          ## 📊 Shackshop CI/CD Reports
+
+          | Report | Link |
+          |---|---|
+          | 📋 Pytest Report | [Open Pytest Report]($PAGES_URL/test-reports/pytest-report.html) |
+          | 📈 Code Coverage | [Open Coverage Report]($PAGES_URL/test-reports/coverage/index.html) |
+          | 📄 Test Execution Log | [Open Test Log]($PAGES_URL/test-reports/test.log) |
+          | 🚀 Application | [Open Shackshop](http://3.107.49.1) |
+
+          **GitHub Pages Dashboard:** [$PAGES_URL]($PAGES_URL)
+
+          EOF
