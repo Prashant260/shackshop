@@ -46,3 +46,125 @@ jobs:
       EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    
+  reports:
+    name: Publish CI Reports
+    needs: [build, test, snyk, sonarcloud, docker, deploy]
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download test reports
+        uses: actions/download-artifact@v6
+        with:
+          name: test-reports
+          path: site/test-reports
+
+      - name: Create dashboard
+        run: |
+          mkdir -p site
+
+          cat > site/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Shackshop CI/CD Report</title>
+
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                background: #f5f5f5;
+                margin: 0;
+              }
+
+              header {
+                background: #24292f;
+                color: white;
+                padding: 30px;
+              }
+
+              main {
+                max-width: 1000px;
+                margin: 30px auto;
+              }
+
+              .card {
+                background: white;
+                padding: 25px;
+                margin: 20px;
+                border-radius: 10px;
+              }
+
+              a {
+                font-weight: bold;
+              }
+            </style>
+          </head>
+
+          <body>
+
+          <header>
+            <h1>Shackshop CI/CD Dashboard</h1>
+            <p>Build → Test → Security → Docker → EC2</p>
+          </header>
+
+          <main>
+
+            <div class="card">
+              <h2>Automated Tests</h2>
+
+              <p>
+                <a href="test-reports/pytest-report.html">
+                  Pytest Report
+                </a>
+              </p>
+
+              <p>
+                <a href="test-reports/coverage/index.html">
+                  Code Coverage
+                </a>
+              </p>
+
+              <p>
+                <a href="test-reports/test.log">
+                  Test Execution Log
+                </a>
+              </p>
+            </div>
+
+            <div class="card">
+              <h2>Pipeline Stages</h2>
+
+              <p>✓ Build</p>
+              <p>✓ Test</p>
+              <p>✓ Snyk</p>
+              <p>✓ SonarCloud</p>
+              <p>✓ Docker Build & Push</p>
+              <p>✓ EC2 Deployment</p>
+
+            </div>
+
+          </main>
+
+          </body>
+          </html>
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

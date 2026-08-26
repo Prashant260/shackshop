@@ -29,3 +29,25 @@ jobs:
       - name: Run pytest
         run: |
           python -m pytest -v
+
+      
+      - name: Run tests
+        run: |
+          mkdir -p reports
+
+          pytest \
+            --html=reports/pytest-report.html \
+            --self-contained-html \
+            --junitxml=reports/junit.xml \
+            --cov=. \
+            --cov-report=html:reports/coverage \
+            --cov-report=term-missing \
+            2>&1 | tee reports/test.log
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-reports
+          path: reports/
+          retention-days: 30
