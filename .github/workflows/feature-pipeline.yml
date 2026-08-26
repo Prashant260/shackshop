@@ -29,5 +29,12 @@ jobs:
     uses: ./.github/workflows/reusable-snyk.yml
     secrets:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-    
- 
+
+  docker:
+    name: Docker Build & Push
+    needs: [build, test, snyk, sonarcloud]
+
+    uses: ./.github/workflows/reusable-docker.yml
+
+    secrets: inherit  
+  
