@@ -33,8 +33,6 @@ jobs:
   docker:
     name: Docker Build & Push
     needs: [build, test, snyk, sonarcloud]
-
     uses: ./.github/workflows/reusable-docker.yml
-
-    secrets: inherit  
-  
+    secrets: inherit
+    
