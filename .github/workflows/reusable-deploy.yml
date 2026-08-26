@@ -1,27 +1,22 @@
-name: Deploy to EC2
+name: Reusable EC2 Deployment
 
 on:
   workflow_call:
     secrets:
       EC2_HOST:
         required: true
-
       EC2_USER:
         required: true
-
       EC2_SSH_KEY:
         required: true
-
       DOCKER_USERNAME:
         required: true
-
       DOCKER_PASSWORD:
         required: true
 
 jobs:
   deploy:
     name: Deploy to EC2
-
     runs-on: ubuntu-latest
 
     steps:
@@ -42,9 +37,9 @@ jobs:
             echo "Starting deployment..."
             echo "================================"
 
-            # Install Docker if it doesn't exist
+            # Install Docker if missing
             if ! command -v docker >/dev/null 2>&1; then
-              echo "Docker not found. Installing Docker..."
+              echo "Docker not found. Installing..."
 
               sudo apt-get update -y
               sudo apt-get install -y docker.io
@@ -52,44 +47,52 @@ jobs:
               sudo systemctl enable docker
               sudo systemctl start docker
 
-              echo "Docker installed successfully."
+              echo "Docker installed."
             else
               echo "Docker already installed."
             fi
 
-            # Verify Docker
-            docker --version
+            echo "Docker version:"
+            sudo docker --version
 
-            # Login to Docker Hub
+            echo "Logging into Docker Hub..."
+
             echo "${{ secrets.DOCKER_PASSWORD }}" | \
               sudo docker login \
-              -u "${{ secrets.DOCKER_USERNAME }}" \
+              --username "${{ secrets.DOCKER_USERNAME }}" \
               --password-stdin
 
-            # Pull latest image
+            echo "Pulling latest image..."
+
             sudo docker pull \
               ${{ secrets.DOCKER_USERNAME }}/shackshop:latest
 
-            # Stop existing container
-            sudo docker stop shackshop || true
+            echo "Stopping old container..."
 
-            # Remove existing container
+            sudo docker stop shackshop || true
             sudo docker rm shackshop || true
 
-            # Start new container
+            echo "Starting new container..."
+
             sudo docker run -d \
               --name shackshop \
               --restart unless-stopped \
               -p 80:8000 \
               ${{ secrets.DOCKER_USERNAME }}/shackshop:latest
 
-            # Verify container
+            echo "Checking container..."
+
             sudo docker ps
 
-            # Test application locally
-            curl -f http://localhost:8000 || true
+            echo "Testing application..."
 
-            # Remove unused images
+            sleep 5
+
+            curl -f http://localhost/ || \
+              curl -f http://localhost:8000/ || true
+
+            echo "Cleaning unused images..."
+
             sudo docker image prune -f
 
             echo "================================"
